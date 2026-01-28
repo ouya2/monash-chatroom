@@ -1,0 +1,107 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.roomMeta {
+  display: flex;
+  flex-direction: column;
+}
+
+.roomTitle {
+  font-weight: 700;
+}
+
+.roomSub {
+  opacity: 0.75;
+  font-size: 14px;
+}
+
+.leave {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.state {
+  padding: 12px 16px;
+  opacity: 0.8;
+}
+
+.list {
+  flex: 1;
+  overflow: auto;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+.msg {
+  border: 1px solid #e3e3e3;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.msgTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.sender {
+  font-weight: 600;
+}
+
+.time {
+  white-space: nowrap;
+}
+
+.text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.composer {
+  padding: 12px 16px;
+  border-top: 1px solid #ddd;
+  display: flex;
+  gap: 10px;
+}
+
+.input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  outline: none;
+}
+
+.send {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #111;
+  cursor: pointer;
+}
