@@ -5,6 +5,8 @@ import { normalizeRoomCode, roomExists, sendMessage, subscribeMessages } from ".
 
 const LS_NAME = "monash_name";
 const LS_ROOM = "monash_roomCode";
+const ROOM_CODE_REGEX = /^[A-Z0-9]{6}$/;
+const MAX_MESSAGE_LENGTH = 400;
 
 function formatTime(ts) {
   // Firestore Timestamp -> Date
@@ -19,7 +21,6 @@ export default function Room() {
 
   const code = useMemo(() => normalizeRoomCode(paramCode), [paramCode]);
 
-  const ROOM_CODE_REGEX = /^[A-Z0-9]{6}$/;
   const isRoomCodeValid = useMemo(() => ROOM_CODE_REGEX.test(code), [code])
 
   const [name, setName] = useState(() => localStorage.getItem(LS_NAME) || "");
@@ -28,6 +29,10 @@ export default function Room() {
   const [error, setError] = useState("");
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
+  const [isSending, setIsSending] = useState(false);
+
+  const trimmed = text.trim();
+  const canSend = status !== "loading" && status !== "error" && trimmed.length > 0 && !isSending;
 
   const listRef = useRef(null);
 
@@ -115,11 +120,18 @@ export default function Room() {
 
   async function onSend(e) {
     e.preventDefault();
+    setError("");
+
+    if (!canSend) return;
+    setIsSending(true);
+
     try {
       await sendMessage(code, name, text);
       setText("");
     } catch (err) {
-      setError(err?.message || "Failed to send.");
+      setError(err?.message || "Failed to send. Please try again.");
+    } finally {
+      setIsSending(false);
     }
   }
 
@@ -168,12 +180,15 @@ export default function Room() {
         <input
           className={styles.input}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => setText(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
           placeholder="Type a message…"
           disabled={status === "loading" || status === "error"}
         />
-        <button className={styles.send} type="submit" disabled={!text.trim() || status === "loading" || status === "error"}>
-          Send
+        <div className={styles.counter}>
+          {text.length}/{MAX_MESSAGE_LENGTH}
+        </div>
+        <button className={styles.send} type="submit" disabled={!canSend}>
+          {isSending ? "Sending…" : "Send"}
         </button>
       </form>
     </div>
