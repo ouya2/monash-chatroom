@@ -21,7 +21,7 @@ export default function Room() {
 
   const code = useMemo(() => normalizeRoomCode(paramCode), [paramCode]);
 
-  const isRoomCodeValid = useMemo(() => ROOM_CODE_REGEX.test(code), [code])
+  const isRoomCodeValid = useMemo(() => ROOM_CODE_REGEX.test(code), [code]);
 
   const [name, setName] = useState(() => localStorage.getItem(LS_NAME) || "");
 
@@ -29,12 +29,15 @@ export default function Room() {
   const [error, setError] = useState("");
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
+  const [sendError, setSendError] = useState("");
   const [isSending, setIsSending] = useState(false);
 
   const trimmed = text.trim();
   const canSend = status !== "loading" && status !== "error" && trimmed.length > 0 && !isSending;
 
   const listRef = useRef(null);
+  const initialScroll = useRef(false);
+  const stickToBottomRef = useRef(null);
 
   useEffect(() => {
     if (!code) {
@@ -115,24 +118,55 @@ export default function Room() {
   useEffect(() => {
     const el = listRef.current;
     if (!el) return;
-    el.scrollTop = el.scrollHeight;
+
+    if (stickToBottomRef.current) {
+      el.scrollTop = el.scrollHeight;
+    }
   }, [messages.length]);
+
+  // scroll to the bottom on initial load
+  useEffect(() => {
+    if (status !== "ready" && status !== "empty") return;
+    if (initialScroll.current) return;
+
+    requestAnimationFrame(() => {
+        const el = listRef.current;
+        if (!el) return;
+        el.scrollTop = el.scrollHeight;
+        initialScroll.current = true;
+      });  
+    }, [status, messages.length]
+  );
+    
+  useEffect(() => {
+    stickToBottomRef.current = true;
+    initialScroll.current = false;
+    }, [code]
+  );
 
   async function onSend(e) {
     e.preventDefault();
-    setError("");
 
     if (!canSend) return;
+    setSendError("");
     setIsSending(true);
 
     try {
-      await sendMessage(code, name, text);
+      await withTimeout(sendMessage(code, name, trimmed), 5000);
       setText("");
+      setSendError("");
     } catch (err) {
-      setError(err?.message || "Failed to send. Please try again.");
+      setSendError(err?.message || "Failed to send. Please try again.");
     } finally {
       setIsSending(false);
     }
+  }
+
+  function withTimeout(promise, ms, message = "Send timed out (offline?)") {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms)),
+    ]);
   }
 
   function exitRoom() {
@@ -140,9 +174,18 @@ export default function Room() {
     navigate("/", { replace: true });
   }
 
+  function handleListScroll() {
+    const el = listRef.current;
+    if (!el) return;
+
+    const threshold = 80; // px
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    stickToBottomRef.current = distanceFromBottom < threshold;
+  }
+
   return (
     <div className={styles.page}>
-      { status != "error" && ( 
+      { status !== "error" && ( 
         <header className={styles.header}>
           <div className={styles.roomMeta}>
             <div className={styles.roomTitle}>Room {code}</div>
@@ -163,7 +206,7 @@ export default function Room() {
         </div> : null}
         {status === "empty" ? <div className={styles.state}>No messages yet. Say hi 👋</div> : null}
 
-        <div className={styles.list} ref={listRef}>
+        <div className={styles.list} ref={listRef} onScroll={handleListScroll}>
           {messages.map((m) => (
             <div key={m.id} className={styles.msg}>
               <div className={styles.msgTop}>
@@ -174,23 +217,32 @@ export default function Room() {
             </div>
           ))}
         </div>
-      </main>
 
-      <form className={styles.composer} onSubmit={onSend}>
-        <input
-          className={styles.input}
-          value={text}
-          onChange={(e) => setText(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
-          placeholder="Type a message…"
-          disabled={status === "loading" || status === "error"}
-        />
-        <div className={styles.counter}>
-          {text.length}/{MAX_MESSAGE_LENGTH}
-        </div>
-        <button className={styles.send} type="submit" disabled={!canSend}>
-          {isSending ? "Sending…" : "Send"}
-        </button>
-      </form>
+        { status !== "error" && sendError ? (
+          <div className={styles.sendError}>
+            {sendError}
+          </div>
+        ) : null}
+
+        <form className={styles.composer} onSubmit={onSend}>
+          <input
+            className={styles.input}
+            value={text}
+            onChange={(e) => {
+              setSendError("");
+              setText(e.target.value.slice(0, MAX_MESSAGE_LENGTH));
+            }}
+            placeholder="Type a message…"
+            disabled={status === "loading" || status === "error"}
+          />
+          <div className={styles.counter}>
+            {text.length}/{MAX_MESSAGE_LENGTH}
+          </div>
+          <button className={styles.send} type="submit" disabled={!canSend}>
+            {isSending ? "Sending…" : "Send"}
+          </button>
+        </form>
+      </main>
     </div>
   );
 }
