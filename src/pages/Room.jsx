@@ -192,18 +192,25 @@ export default function Room() {
             <div className={styles.roomSub}>You are: {name}</div>
           </div>
           <button className={styles.leave} onClick={exitRoom}>
-            Leave
+            ⟵ Leave
           </button>
         </header>
     )}
 
       <main className={styles.main}>
         {status === "loading" ? <div className={styles.state}>Loading…</div> : null}
-        {status === "error" ? <div className={styles.state}>{error || "Something went wrong."}
-          <button className={styles.backBtn} onClick={exitRoom}>
-            Back to Lobby
-          </button>
-        </div> : null}
+        
+        {status === "error" ? (
+          <div className={styles.state}>
+            <div className={styles.stateError}>{error || "Please try again."}</div>
+            <div className={styles.stateActions}>
+              <button className={styles.backBtn} onClick={exitRoom}>
+                Back to Lobby
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         {status === "empty" ? <div className={styles.state}>No messages yet. Say hi 👋</div> : null}
 
         <div className={styles.list} ref={listRef} onScroll={handleListScroll}>
