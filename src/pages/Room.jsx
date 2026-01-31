@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styles from "./Room.module.scss";
 import { normalizeRoomCode, roomExists, sendMessage, subscribeMessages } from "../lib/roomChat";
+import { withTimeout } from '../lib/utils';
 
 const LS_NAME = "monash_name";
 const LS_ROOM = "monash_roomCode";
@@ -62,7 +63,12 @@ export default function Room() {
 
   // Persist room code for reconnect
   useEffect(() => {
-    if (code) localStorage.setItem(LS_ROOM, code);
+    const normalizedRoomCode = normalizeRoomCode(code);
+    if (normalizedRoomCode) {
+      localStorage.setItem(LS_ROOM, normalizedRoomCode);
+    } else {
+      localStorage.removeItem(LS_ROOM);
+    }
   }, [code]);
 
   // Verify room exists + subscribe
@@ -78,14 +84,14 @@ export default function Room() {
       setError("");
 
       try {
-        const exists = await roomExists(code);
+        const exists = await withTimeout(roomExists(code), 4000);
         if (!exists) {
           localStorage.removeItem(LS_ROOM);
           setStatus("error");
           setError("Room not found.");
           return;
         }
-
+        localStorage.setItem(LS_ROOM, code);
         unsub = subscribeMessages(
           code,
           (msgs) => {
@@ -106,7 +112,7 @@ export default function Room() {
       }
     }
 
-    if (code) boot();
+    if (code) boot().catch(() => {});
 
     return () => {
       cancelled = true;
@@ -162,13 +168,6 @@ export default function Room() {
     }
   }
 
-  function withTimeout(promise, ms, message = "Send timed out (offline?)") {
-    return Promise.race([
-      promise,
-      new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms)),
-    ]);
-  }
-
   function exitRoom() {
     localStorage.removeItem(LS_ROOM);
     navigate("/", { replace: true });
@@ -211,7 +210,7 @@ export default function Room() {
           </div>
         ) : null}
 
-        {status === "empty" ? <div className={styles.state}>No messages yet. Say hi 👋</div> : null}
+        {status === "empty" ? <div className={styles.state}>No messages yet. Say hi</div> : null}
 
         <div className={styles.list} ref={listRef} onScroll={handleListScroll}>
           {messages.map((m) => (
