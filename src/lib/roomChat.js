@@ -38,9 +38,6 @@ export async function createRoom(preferredCode) {
   let code = preferredCode || generateRoomCode();
 
   // Keep looping until we find an unused code.
-  // For a code challenge, this is acceptable; collisions are extremely unlikely.
-  // If you want to cap attempts, add a counter.
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const roomRef = doc(db, "rooms", code);
     const snap = await getDoc(roomRef);
