@@ -8,6 +8,23 @@ Users can:
 - Chat in realtime with others in the same room
 - Refresh the page and automatically reconnect (via `localStorage`)
 
+## Run Locally
+
+1. Install dependencies:
+```bash
+npm install
+```
+2. Create `.env.local` (see Firebase setup below)
+3. Start dev server:
+```bash
+npm run dev
+```
+4. Production build/preview
+```bash
+npm run build
+npm run preview
+```
+
 ## Tech Stack
 
 - React + Vite
@@ -21,12 +38,20 @@ Users can:
 - `/` → Lobby (enter name, create/join room)
 - `/room/:code` → Room chat (realtime messages)
 
-### Persistence & Reconnect
-The app stores:
-- `monash_name` (display name)
-- `monash_roomCode` (room code)
+### Room Code Rules
+- Room codes are exactly 6 characters: `A-Z` and `0-9` (`^[A-Z0-9]{6}$`)
+- Inputs are normalised to uppercase.
+- The room route validates the code and shows a single "Back to Lobby" action on error.
 
-in `localStorage` so a refresh returns you to the room.
+### Reconnect + Leave
+
+- `localStorage` stores keys:
+  - `monash_name`
+  - `monash_roomCode`
+- On Lobby load, if both keys exist the app verifies the room still exists (`roomExists`) and navigates back into it.
+- “Leave” clears `monash_roomCode` so returning to Lobby does not immediately redirect back into the room.
+- Network calls are wrapped with a small timeout to avoid indefinite “Loading…” / “Sending…” when offline.
+
 
 ### Firestore Data Model
 
@@ -39,7 +64,12 @@ Rooms and messages are stored **under the room**:
   - `text` (string)
   - `createdAt` (server timestamp)
 
-Messages are subscribed in realtime, ordered by `createdAt`, and limited to the latest 100.
+- Messages are subscribed in realtime, ordered by `createdAt`, and limited to the latest 100.
+- Message length is capped at 400 characters.
+
+### Firestore Security Rules
+
+This challenge app uses display-name-only identity (no Firebase Auth). For a production app you would typically require authentication and enforce stricter Firestore rules.
 
 ## Prerequisites
 
@@ -65,8 +95,8 @@ npm -v
 1. In Firebase Console → **Build** → **Firestore Database**
 2. Click **Create database**
 
-### 3) local development
-1. Create a .env.local file in the project root:
+### 3) Local Development
+1. Create a `.env.local` file in the project root:
 2. Add your Firebase Web app config values:
 
 ```env
