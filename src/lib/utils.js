@@ -5,6 +5,8 @@ export function withTimeout(promise, ms, message = "Request Timed out (offline?)
         return promise;
     }
 
+    promise.catch(() => {}); // Prevent unhandled rejection if original promise fail
+
     let timerId;
 
     const timeoutPromise = new Promise((_, reject) => {
@@ -14,5 +16,7 @@ export function withTimeout(promise, ms, message = "Request Timed out (offline?)
     return Promise.race([
         promise,
         new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms)),
-    ]);
+    ]).finally(() => {
+        if (timerId) clearTimeout(timerId);
+    })
 }

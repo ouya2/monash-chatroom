@@ -33,7 +33,19 @@
 
 .roomSub {
   opacity: 0.75;
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.userName {
+
+  font-size: 15px;      
+  font-weight: 700;
+  letter-spacing: 0.2px;
+
+  color: rgba(200, 220, 255, 0.95);
+  
 }
 
 .leave {
@@ -43,7 +55,7 @@
   font-weight: 700;
 
   background: rgba(255, 255, 255, 0.92);
-  color: #111827;                 // dark text
+  color: #111827;                 
   border: 1px solid rgba(255, 255, 255, 0.92);
 }
 
@@ -117,7 +129,15 @@
 }
 
 .sender {
+  font-size: 13px;
   font-weight: 600;
+  letter-spacing: 0.2px;
+  color: rgba(120, 170, 255, 0.95);
+
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(120, 170, 255, 0.10);
+  border: 1px solid rgba(120, 170, 255, 0.18);
 }
 
 .time {
@@ -128,6 +148,38 @@
   white-space: pre-wrap;
   word-break: break-word;
   line-height: 1.35;
+}
+
+.group {
+  margin-top: 12px;
+  padding: 10px 10px 8px;
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.groupHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 8px;
+}
+
+.groupBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; 
+}
+
+.groupMsg {
+  padding: 0; 
+  background: transparent;
+  border: none;
 }
 
 .sendError {
@@ -185,6 +237,23 @@
 .send:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+.emptyState {
+  margin: 12px 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.emptyHint {
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: 0.2;
 }
 
 .backBtn {

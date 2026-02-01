@@ -42,7 +42,7 @@ export default function Lobby() {
         }
   
         try {
-          const exists = await withTimeout(roomExists(storedRoom), 4000);
+          const exists = await withTimeout(roomExists(storedRoom), 4000, "Lobby reconnect timed out");
           if (cancelled) return;
           if (exists) {
             navigate(`/room/${storedRoom}`, { replace: true });
@@ -91,7 +91,7 @@ export default function Lobby() {
     if (!isValidCode(c)) return setError("Room code must be exactly 6 chars A–Z/0–9.");
     setBusy(true);
     try {
-      const exists = await withTimeout(roomExists(c), 4000, "Room check timed out (offline?)");
+      const exists = await withTimeout(roomExists(c), 4000, "Room check timed out when join (offline?)");
       if (!exists) return setError("Room not found. Check the code or create a new room.");
       localStorage.setItem(LS_NAME, name.trim());
       localStorage.setItem(LS_ROOM, c);

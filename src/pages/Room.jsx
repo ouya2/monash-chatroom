@@ -84,7 +84,7 @@ export default function Room() {
       setError("");
 
       try {
-        const exists = await withTimeout(roomExists(code), 4000);
+        const exists = await withTimeout(roomExists(code), 4000, "Room boot: roomExists timed out (offline?)");
         if (!exists) {
           localStorage.removeItem(LS_ROOM);
           setStatus("error");
@@ -158,7 +158,7 @@ export default function Room() {
     setIsSending(true);
 
     try {
-      await withTimeout(sendMessage(code, name, trimmed), 5000);
+      await withTimeout(sendMessage(code, name, trimmed), 5000, "Send message timed out");
       setText("");
       setSendError("");
     } catch (err) {
@@ -182,13 +182,30 @@ export default function Room() {
     stickToBottomRef.current = distanceFromBottom < threshold;
   }
 
+  function groupMsgBySender(messages) {
+    const groups = [];
+    for (const m of messages) {
+      const last = groups[groups.length - 1];
+      const senderName = m.senderName || "Unknown";
+
+      if (!last || last.senderName !== senderName) {
+        groups.push({senderName, items: [m]});
+      } else {
+        last.items.push(m);
+      }
+    }
+    return groups;
+  }
+
   return (
     <div className={styles.page}>
       { status !== "error" && ( 
         <header className={styles.header}>
           <div className={styles.roomMeta}>
             <div className={styles.roomTitle}>Room {code}</div>
-            <div className={styles.roomSub}>You are: {name}</div>
+            <div className={styles.roomSub}>
+              You are: <span className={styles.userName}>{name}</span>
+            </div>
           </div>
           <button className={styles.leave} onClick={exitRoom}>
             ⟵ Leave
@@ -210,18 +227,34 @@ export default function Room() {
           </div>
         ) : null}
 
-        {status === "empty" ? <div className={styles.state}>No messages yet. Say hi</div> : null}
+        {status === "empty" ? (
+          <div className={styles.emptyState}>
+            <div className={styles.emptyHint}>No messages yet.</div> 
+          </div>) : null}
 
         <div className={styles.list} ref={listRef} onScroll={handleListScroll}>
-          {messages.map((m) => (
-            <div key={m.id} className={styles.msg}>
-              <div className={styles.msgTop}>
-                <span className={styles.sender}>{m.senderName || "Unknown"}</span>
-                <span className={styles.time}>{formatTime(m.createdAt)}</span>
+          {groupMsgBySender(messages).map((senderMsgGroup, gi) => {
+            const first = senderMsgGroup.items[0];
+            const last = senderMsgGroup.items[senderMsgGroup.items.length - 1];
+            const groupKey = first?.id ?? `${senderMsgGroup.senderName}-${gi}`;
+
+            return (
+            <div key={groupKey} className={styles.group}>
+              <div className={styles.groupHeader}>
+                <span className={styles.sender}>{senderMsgGroup.senderName}</span>
+                <span className={styles.time}>{formatTime(last?.createdAt)}</span>
               </div>
-              <div className={styles.text}>{m.text}</div>
+
+              <div className={styles.groupBody}>
+              {senderMsgGroup.items.map((m, mi) => (
+                <div key={m.id ?? `${groupKey}-${mi}`} className={styles.groupMsg}>
+                  <div className={styles.text}>{m.text}</div>
+                </div>
+              ))}
+             </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         { status !== "error" && sendError ? (
